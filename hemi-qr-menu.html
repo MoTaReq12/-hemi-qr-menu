@@ -1,0 +1,536 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>hemi — قائمة رقمية</title>
+<meta name="description" content="القائمة الرقمية التفاعلية لـ Hemi Coffee Roasters — قهوة مختصة محمصة بعناية." />
+<meta name="theme-color" content="#2D2B29" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Cairo:wght@400;600;700;800;900&family=Tajawal:wght@300;400;500;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          ink:   { DEFAULT: '#2D2B29', 50: '#3a3733', 100: '#343128' },
+          gold:  { DEFAULT: '#EFBD45', 600: '#d6a331', 300: '#f4d27e' },
+          beige: { DEFAULT: '#EDE2C2', 100: '#FFF8EB' },
+        },
+        fontFamily: {
+          wordmark: ["'Fraunces'", 'serif'],
+          displayar: ["'Cairo'", 'sans-serif'],
+          body: ["'Tajawal'", "'Inter'", 'sans-serif'],
+        },
+        boxShadow: {
+          card: '0 10px 30px -12px rgba(0,0,0,0.55)',
+          goldGlow: '0 0 0 1px rgba(239,189,69,0.25), 0 8px 24px -8px rgba(239,189,69,0.35)',
+        },
+        keyframes: {
+          riseIn: { '0%': { opacity: 0, transform: 'translateY(10px)' }, '100%': { opacity: 1, transform: 'translateY(0)' } },
+          steamUp: { '0%,100%': { transform: 'translateY(0) scaleY(1)', opacity: .55 }, '50%': { transform: 'translateY(-6px) scaleY(1.15)', opacity: .15 } },
+          sheen: { '0%': { backgroundPosition: '200% 0' }, '100%': { backgroundPosition: '-200% 0' } },
+        },
+        animation: {
+          riseIn: 'riseIn .45s cubic-bezier(.2,.7,.2,1) both',
+          steamUp: 'steamUp 3.2s ease-in-out infinite',
+          sheen: 'sheen 2.4s linear infinite',
+        },
+      },
+    },
+  };
+</script>
+
+<style>
+  html { scroll-behavior: smooth; }
+  body { background:#2D2B29; }
+  [dir="rtl"] .font-display { font-family: 'Cairo', sans-serif; }
+  [dir="ltr"] .font-display { font-family: 'Fraunces', serif; }
+  .no-scrollbar::-webkit-scrollbar { display:none; }
+  .no-scrollbar { -ms-overflow-style:none; scrollbar-width:none; }
+  .tap-scale { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+  .tap-scale:active { transform: scale(.97); }
+  .roast-track { background: linear-gradient(90deg, #EDE2C2 0%, #EFBD45 35%, #8a5a22 70%, #2D2B29 100%); }
+  .chip { font-family:'Tajawal','Inter',sans-serif; }
+  .fade-item { animation: riseIn .4s cubic-bezier(.2,.7,.2,1) both; }
+  #searchInput::placeholder { color: rgba(237,226,194,0.45); }
+  .sheen-text{
+    background-image: linear-gradient(100deg, rgba(239,189,69,0) 40%, rgba(239,189,69,.9) 50%, rgba(239,189,69,0) 60%);
+    background-size: 200% 100%;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,*::before,*::after{ animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; scroll-behavior:auto !important; }
+  }
+  /* modal open state */
+  .modal-open { overflow:hidden; }
+</style>
+</head>
+
+<body class="bg-ink text-beige-100 font-body min-h-screen selection:bg-gold/30">
+
+<!-- ================= HEADER ================= -->
+<header class="sticky top-0 z-40 border-b border-white/8 bg-ink/90 backdrop-blur-xl">
+  <div class="mx-auto max-w-2xl px-4 pt-4">
+    <!-- top row: lang toggle + logo (centered) + hours pill -->
+    <div class="relative flex items-center justify-center py-1">
+      <button id="langBtn" class="absolute start-0 flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-bold text-beige tap-scale hover:border-gold/40" aria-label="Toggle language">
+        <span id="langBtnLabel">EN</span>
+      </button>
+
+      <!-- logo wordmark (recreated from brand PDF, adapts per language) -->
+      <div class="flex flex-col items-center leading-none">
+        <div class="flex items-center gap-1">
+          <span id="logoWord" class="font-wordmark text-3xl font-semibold tracking-tight text-gold">hemi</span>
+          <span class="mt-1 h-[3px] w-3 rounded-full bg-gold"></span>
+        </div>
+        <span id="logoSub" class="mt-1 font-display text-[10px] font-bold uppercase tracking-[0.35em] text-beige/70">Coffee Roasters</span>
+      </div>
+
+      <span id="hoursPill" class="absolute end-0 hidden items-center gap-1.5 rounded-full border border-gold/25 bg-gold/10 px-3 py-1.5 text-[11px] font-bold text-gold sm:flex">
+        <svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3" stroke-linecap="round"/></svg>
+        <span id="hoursText">24/7</span>
+      </span>
+    </div>
+
+    <!-- search -->
+    <div class="relative mt-4">
+      <svg class="pointer-events-none absolute start-4 top-1/2 h-4 w-4 -translate-y-1/2 text-beige/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3" stroke-linecap="round"/></svg>
+      <input id="searchInput" type="text" class="w-full rounded-2xl border border-white/10 bg-white/5 py-3 ps-11 pe-4 text-sm text-beige-100 outline-none transition focus:border-gold/50 focus:bg-white/[0.07]" />
+    </div>
+
+    <!-- category tabs -->
+    <div id="tabsWrap" class="no-scrollbar mt-4 flex gap-2 overflow-x-auto pb-3.5"></div>
+  </div>
+</header>
+
+<!-- thin decorative rule with roast-gradient, signature motif -->
+<div class="mx-auto max-w-2xl px-4">
+  <div class="h-[3px] w-full rounded-full roast-track opacity-70"></div>
+</div>
+
+<!-- ================= MENU GRID ================= -->
+<main class="mx-auto max-w-2xl px-4 pb-24 pt-6">
+  <div id="resultCount" class="mb-3 text-xs font-medium text-beige/45"></div>
+  <div id="grid" class="flex flex-col gap-3"></div>
+  <div id="emptyState" class="hidden flex-col items-center gap-3 py-20 text-center">
+    <svg class="h-10 w-10 text-beige/25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 7h16l-1.5 11.5a2 2 0 0 1-2 1.5H7.5a2 2 0 0 1-2-1.5L4 7Z"/><path d="M9 7V5a3 3 0 0 1 6 0v2"/></svg>
+    <p id="emptyText" class="font-display text-sm font-bold text-beige/60">لا توجد أصناف مطابقة</p>
+  </div>
+</main>
+
+<!-- ================= FOOTER ================= -->
+<footer class="border-t border-white/8 px-4 py-10 text-center">
+  <div class="mx-auto flex max-w-2xl flex-col items-center gap-2">
+    <span class="font-wordmark text-xl font-semibold text-gold">hemi</span>
+    <p id="footerTagline" class="max-w-xs text-xs leading-relaxed text-beige/45">قهوة مختصة، محمصة بخبرة وإتقان — جدة، المملكة العربية السعودية</p>
+    <p class="mt-2 text-[11px] text-beige/30">@hemicoffee · hemicafe.com</p>
+  </div>
+</footer>
+
+<!-- ================= ITEM MODAL ================= -->
+<div id="modalOverlay" class="fixed inset-0 z-50 hidden items-end justify-center bg-black/70 backdrop-blur-sm sm:items-center" role="dialog" aria-modal="true">
+  <div id="modalCard" class="relative w-full max-w-md translate-y-6 rounded-t-[2rem] border border-white/10 bg-ink shadow-2xl transition-transform duration-300 sm:translate-y-0 sm:rounded-[2rem]">
+    <button id="modalClose" class="absolute end-4 top-4 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-black/40 text-white backdrop-blur-md tap-scale" aria-label="Close">
+      <svg class="h-4.5 w-4.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 6l12 12M18 6 6 18" stroke-linecap="round"/></svg>
+    </button>
+
+    <div class="relative h-56 w-full overflow-hidden rounded-t-[2rem] bg-ink-100 sm:h-64">
+      <img id="modalImg" src="" alt="" class="h-full w-full object-cover" />
+      <div class="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-ink to-transparent"></div>
+      <span id="modalBadge" class="absolute start-4 top-4 hidden rounded-full bg-gold px-3 py-1 text-[11px] font-extrabold text-ink"></span>
+    </div>
+
+    <div class="max-h-[60vh] overflow-y-auto px-6 pb-8 pt-5">
+      <div id="modalOrigin" class="mb-1 text-xs font-bold uppercase tracking-[0.2em] text-gold/80"></div>
+      <div class="flex items-start justify-between gap-4">
+        <h3 id="modalName" class="font-display text-2xl font-extrabold text-beige-100"></h3>
+        <span id="modalPrice" class="whitespace-nowrap font-wordmark text-2xl font-semibold text-gold"></span>
+      </div>
+
+      <p id="modalDesc" class="mt-3 text-sm leading-relaxed text-beige/60"></p>
+
+      <div id="modalNotesWrap" class="mt-5">
+        <p id="modalNotesLabel" class="mb-2 text-[11px] font-bold uppercase tracking-[0.2em] text-beige/40"></p>
+        <div id="modalNotes" class="flex flex-wrap gap-2"></div>
+      </div>
+
+      <div id="modalRoastWrap" class="mt-6 hidden">
+        <div class="mb-2 flex items-center justify-between">
+          <p id="modalRoastLabel" class="text-[11px] font-bold uppercase tracking-[0.2em] text-beige/40"></p>
+          <span id="modalRoastValue" class="text-[11px] font-bold text-gold"></span>
+        </div>
+        <div class="relative h-2 w-full overflow-hidden rounded-full roast-track">
+          <div id="modalRoastMarker" class="absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 -translate-x-1/2 rounded-full border-2 border-ink bg-white shadow"></div>
+        </div>
+        <div class="mt-1.5 flex justify-between text-[10px] text-beige/35">
+          <span id="roastLightLabel"></span>
+          <span id="roastDarkLabel"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   HEMI COFFEE ROASTERS — بيانات القائمة (Zero-backend, edit here only)
+   ===================================================================== */
+const MENU = [
+  // ---------- Single Origin Coffee ----------
+  { id:'so-eth', cat:'single', price:34, roast:1, origin:{ar:'إثيوبيا · يرغاتشيف',en:'Ethiopia · Yirgacheffe'},
+    name:{ar:'يرغاتشيف — غسيل',en:'Yirgacheffe — Washed'},
+    desc:{ar:'تحميص فاتح يبرز حموضة زهرية نظيفة وقوام شاي أنيق، من أشهر مزارع سيدامو.',en:'Light roast highlighting a clean floral acidity and delicate tea-like body, from Sidamo\'s finest gardens.'},
+    notes:{ar:['ياسمين','برغموت','خوخ'],en:['Jasmine','Bergamot','Peach']},
+    img:'https://images.unsplash.com/photo-1447933601403-0c6688de566e?q=80&w=800&auto=format&fit=crop', badge:{ar:'الأكثر طلبًا',en:'Bestseller'} },
+
+  { id:'so-col', cat:'single', price:30, roast:2, origin:{ar:'كولومبيا · هويلا',en:'Colombia · Huila'},
+    name:{ar:'هويلا — مغسول',en:'Huila — Washed'},
+    desc:{ar:'توازن كلاسيكي بين الحلاوة والحموضة، مثالي لمن يجرب القهوة المختصة لأول مرة.',en:'Classic balance of sweetness and acidity — an ideal entry point into specialty coffee.'},
+    notes:{ar:['كراميل','تفاح أحمر','سكر بني'],en:['Caramel','Red Apple','Brown Sugar']},
+    img:'https://images.unsplash.com/photo-1587734195503-904fca47e0ca?q=80&w=800&auto=format&fit=crop' },
+
+  { id:'so-ken', cat:'single', price:36, roast:2, origin:{ar:'كينيا · نييري',en:'Kenya · Nyeri'},
+    name:{ar:'نييري AA',en:'Nyeri AA'},
+    desc:{ar:'حموضة نبيذية حيوية وقوام كامل، من أعلى تصنيفات الفحص في السوق العالمي.',en:'Vivid, wine-like acidity with a full body — graded among the highest cupping scores globally.'},
+    notes:{ar:['كشمش أسود','جريب فروت','نبيذ'],en:['Blackcurrant','Grapefruit','Wine']},
+    img:'https://images.unsplash.com/photo-1524350876685-274059332603?q=80&w=800&auto=format&fit=crop', badge:{ar:'جديد',en:'New'} },
+
+  { id:'so-pan', cat:'single', price:58, roast:1, origin:{ar:'بنما · جيشا',en:'Panama · Geisha'},
+    name:{ar:'جيشا — لوت محدود',en:'Geisha — Limited Lot'},
+    desc:{ar:'صنف نادر بأسلوب معالجة العسل، عطر استوائي مكثف وحلاوة تدوم طويلًا في الفم.',en:'A rare honey-processed lot with an intense tropical aroma and a lingering, elegant sweetness.'},
+    notes:{ar:['ياسمين','عسل','فاكهة استوائية'],en:['Jasmine','Honey','Tropical Fruit']},
+    img:'https://images.unsplash.com/photo-1442512595331-e89e73853f31?q=80&w=800&auto=format&fit=crop', badge:{ar:'إصدار محدود',en:'Limited'} },
+
+  { id:'so-yem', cat:'single', price:38, roast:4, origin:{ar:'اليمن · حراز',en:'Yemen · Haraz'},
+    name:{ar:'حراز — تحميص متوسط داكن',en:'Haraz — Medium-Dark'},
+    desc:{ar:'إرث القهوة العربية الأصيل — قوام كثيف ونكهات دافئة تحاكي أجواء الجبال اليمنية.',en:'A tribute to Arabian coffee heritage — heavy body and warm, spice-driven character.'},
+    notes:{ar:['تمر','بهارات','شوكولاتة داكنة'],en:['Date','Spice','Dark Chocolate']},
+    img:'https://images.unsplash.com/photo-1497935586351-b67a49e012bf?q=80&w=800&auto=format&fit=crop' },
+
+  // ---------- Espresso & Hot Beverages ----------
+  { id:'esp', cat:'hot', price:16, origin:null,
+    name:{ar:'إسبرسو',en:'Espresso'},
+    desc:{ar:'جرعة مركزة من مزيج التحميص الخاص بهيمي، بقشدة ذهبية كثيفة.',en:'A concentrated shot of our house blend, topped with a rich golden crema.'},
+    notes:{ar:['كاكاو','بندق','قصب سكر'],en:['Cocoa','Hazelnut','Cane Sugar']},
+    img:'https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?q=80&w=800&auto=format&fit=crop' },
+
+  { id:'amer', cat:'hot', price:18, origin:null,
+    name:{ar:'أمريكانو',en:'Americano'},
+    desc:{ar:'إسبرسو ممدد بالماء الساخن لقوام خفيف ونكهة نظيفة تدوم طويلًا.',en:'Espresso lengthened with hot water for a light body and a clean, lasting flavor.'},
+    notes:{ar:['كراميل','مكسرات محمصة'],en:['Caramel','Roasted Nuts']},
+    img:'https://images.unsplash.com/photo-1551030173-122aabc4489c?q=80&w=800&auto=format&fit=crop' },
+
+  { id:'capp', cat:'hot', price:20, origin:null,
+    name:{ar:'كابتشينو',en:'Cappuccino'},
+    desc:{ar:'إسبرسو مع حليب مبخر ورغوة كثيفة حريرية — توازن مثالي بين القوة والنعومة.',en:'Espresso with steamed milk and a thick silky foam — a perfect balance of strength and softness.'},
+    notes:{ar:['حليب مبخر','كراميل خفيف'],en:['Steamed Milk','Light Caramel']},
+    img:'https://images.unsplash.com/photo-1572442388796-11668a67e53d?q=80&w=800&auto=format&fit=crop', badge:{ar:'الأكثر طلبًا',en:'Bestseller'} },
+
+  { id:'flat', cat:'hot', price:21, origin:null,
+    name:{ar:'فلات وايت',en:'Flat White'},
+    desc:{ar:'حليب مخملي القوام مع طبقة رقيقة من الرغوة تبرز حلاوة الإسبرسو الطبيعية.',en:'Velvety milk with a thin foam layer that lets the espresso\'s natural sweetness shine.'},
+    notes:{ar:['شوكولاتة بالحليب','عسل'],en:['Milk Chocolate','Honey']},
+    img:'https://images.unsplash.com/photo-1497935586351-b67a49e012bf?q=80&w=800&auto=format&fit=crop' },
+
+  { id:'span', cat:'hot', price:22, origin:null,
+    name:{ar:'اسبانيش لاتيه',en:'Spanish Latte'},
+    desc:{ar:'مزيج غني من الحليب المكثف المحلى والإسبرسو، لمن يفضل نكهة أكثر حلاوة.',en:'A rich blend of sweetened condensed milk and espresso for a smoother, sweeter cup.'},
+    notes:{ar:['حليب مكثف','فانيليا'],en:['Condensed Milk','Vanilla']},
+    img:'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?q=80&w=800&auto=format&fit=crop' },
+
+  { id:'qahwa', cat:'hot', price:19, origin:null,
+    name:{ar:'قهوة عربية',en:'Arabic Coffee — Qahwa'},
+    desc:{ar:'قهوة سادة محضّرة بالهيل والزعفران على الطريقة التقليدية، تُقدّم في دلة نحاسية.',en:'Lightly roasted coffee brewed with cardamom and saffron in the traditional style, served in a copper dallah.'},
+    notes:{ar:['هيل','زعفران','قرنفل'],en:['Cardamom','Saffron','Clove']},
+    img:'https://images.unsplash.com/photo-1524350876685-274059332603?q=80&w=800&auto=format&fit=crop', badge:{ar:'تقليدي',en:'Heritage'} },
+
+  // ---------- Cold Drinks ----------
+  { id:'coldbrew', cat:'cold', price:22, origin:null,
+    name:{ar:'كولد برو',en:'Cold Brew'},
+    desc:{ar:'تخمير بارد لمدة 18 ساعة يعطي قوامًا ناعمًا وحموضة منخفضة جدًا.',en:'Steeped cold for 18 hours for an ultra-smooth body and very low acidity.'},
+    notes:{ar:['شوكولاتة','كراميل بارد'],en:['Chocolate','Cold Caramel']},
+    img:'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?q=80&w=800&auto=format&fit=crop' },
+
+  { id:'icedlatte', cat:'cold', price:23, origin:null,
+    name:{ar:'آيس لاتيه',en:'Iced Latte'},
+    desc:{ar:'إسبرسو مثلج مع حليب بارد ومكعبات ثلج — انتعاش يومي كلاسيكي.',en:'Chilled espresso over cold milk and ice — a classic everyday refresher.'},
+    notes:{ar:['حليب بارد','فانيليا خفيفة'],en:['Cold Milk','Light Vanilla']},
+    img:'https://images.unsplash.com/photo-1517701604599-bb29b565090c?q=80&w=800&auto=format&fit=crop' },
+
+  { id:'icedspan', cat:'cold', price:25, origin:null,
+    name:{ar:'آيس اسبانيش لاتيه',en:'Iced Spanish Latte'},
+    desc:{ar:'نسخة مثلجة من الاسبانيش لاتيه بحلاوة متوازنة ومظهر بطبقتين مميز.',en:'The iced version of our Spanish latte — balanced sweetness with a striking layered look.'},
+    notes:{ar:['حليب مكثف','فانيليا'],en:['Condensed Milk','Vanilla']},
+    img:'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?q=80&w=800&auto=format&fit=crop', badge:{ar:'الأكثر طلبًا',en:'Bestseller'} },
+
+  { id:'affogato', cat:'cold', price:26, origin:null,
+    name:{ar:'أفوجاتو',en:'Affogato'},
+    desc:{ar:'كرة آيس كريم فانيليا "مغرّقة" بجرعة إسبرسو ساخنة — حلوى وقهوة في آن واحد.',en:'A scoop of vanilla gelato "drowned" in a hot espresso shot — dessert and coffee in one.'},
+    notes:{ar:['فانيليا','إسبرسو ساخن'],en:['Vanilla','Hot Espresso']},
+    img:'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?q=80&w=800&auto=format&fit=crop' },
+
+  { id:'mintlemon', cat:'cold', price:20, origin:null,
+    name:{ar:'ليمون بالنعناع',en:'Lemon Mint'},
+    desc:{ar:'مشروب منعش خالٍ من الكافيين لمن يفضّل استراحة خفيفة بين أكوابه.',en:'A refreshing caffeine-free option for a lighter break between cups.'},
+    notes:{ar:['ليمون طازج','نعناع'],en:['Fresh Lemon','Mint']},
+    img:'https://images.unsplash.com/photo-1497534446932-c925b458314e?q=80&w=800&auto=format&fit=crop' },
+
+  // ---------- Bakery & Desserts ----------
+  { id:'croissant', cat:'bakery', price:16, origin:null,
+    name:{ar:'كرواسون زبدة',en:'Butter Croissant'},
+    desc:{ar:'طبقات هشة مقرمشة من الخارج وطرية من الداخل، مخبوزة يوميًا في الفرن الخاص بنا.',en:'Crisp, flaky layers outside and soft within — baked fresh daily in-house.'},
+    notes:{ar:['زبدة','قمح كامل'],en:['Butter','Whole Wheat']},
+    img:'https://images.unsplash.com/photo-1555507036-ab1f4038808a?q=80&w=800&auto=format&fit=crop' },
+
+  { id:'basbousa', cat:'bakery', price:14, origin:null,
+    name:{ar:'بسبوسة بالقشطة',en:'Basbousa with Qishta'},
+    desc:{ar:'حلا شرقي كلاسيكي من السميد بالقطر، مغطى بطبقة قشطة طازجة.',en:'A classic semolina syrup cake, topped with a layer of fresh clotted cream.'},
+    notes:{ar:['قطر','قشطة','جوز هند'],en:['Syrup','Qishta','Coconut']},
+    img:'https://images.unsplash.com/photo-1519676867240-f03562e64548?q=80&w=800&auto=format&fit=crop', badge:{ar:'طبق محلي',en:'Local Favorite'} },
+
+  { id:'cheesecake', cat:'bakery', price:22, origin:null,
+    name:{ar:'تشيز كيك فراولة',en:'Strawberry Cheesecake'},
+    desc:{ar:'قاعدة بسكويت مقرمشة وطبقة جبن كريمي ناعم مع صوص فراولة طازج.',en:'A crisp biscuit base with a smooth cream cheese layer and fresh strawberry sauce.'},
+    notes:{ar:['فراولة','جبن كريمي'],en:['Strawberry','Cream Cheese']},
+    img:'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?q=80&w=800&auto=format&fit=crop' },
+
+  { id:'pistcookie', cat:'bakery', price:15, origin:null,
+    name:{ar:'كوكيز الفستق',en:'Pistachio Cookies'},
+    desc:{ar:'قوام طري من الداخل ومقرمش من الأطراف، محشو بقطع فستق حلبي فاخرة.',en:'Soft-centered with crisp edges, loaded with premium Aleppo pistachio pieces.'},
+    notes:{ar:['فستق حلبي','زبدة بنية'],en:['Aleppo Pistachio','Brown Butter']},
+    img:'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?q=80&w=800&auto=format&fit=crop', badge:{ar:'جديد',en:'New'} },
+
+  { id:'cinnamonroll', cat:'bakery', price:18, origin:null,
+    name:{ar:'سينامون رول',en:'Cinnamon Roll'},
+    desc:{ar:'عجينة طرية ملفوفة بالقرفة والسكر البني، مغطاة بجلاسيه الجبن الكريمي.',en:'Soft dough rolled with cinnamon and brown sugar, finished with a cream-cheese glaze.'},
+    notes:{ar:['قرفة','جلاسيه جبن كريمي'],en:['Cinnamon','Cream-Cheese Glaze']},
+    img:'https://images.unsplash.com/photo-1509365465985-25d11c17e812?q=80&w=800&auto=format&fit=crop' },
+];
+
+/* =====================================================================
+   i18n dictionary — كل نصوص الواجهة الثابتة
+   ===================================================================== */
+const UI = {
+  ar: {
+    dir:'rtl', lang:'ar', langBtn:'EN',
+    logoWord:'هيمي', logoSub:'مقهى ومحمصة',
+    hours:'مفتوح 24/7',
+    searchPh:'ابحث عن صنف، نكهة، أو منشأ...',
+    tabs:{ all:'الكل', single:'قهوة أصل واحد', hot:'إسبرسو ومشروبات ساخنة', cold:'مشروبات باردة', bakery:'مخبوزات وحلويات' },
+    resultsCount:(n)=> n + ' صنف' ,
+    empty:'لا توجد أصناف مطابقة لبحثك',
+    notesLabel:'ملاحظات التذوق',
+    roastLabel:'درجة التحميص',
+    roastLight:'فاتح', roastDark:'داكن',
+    price:(p)=> p + ' ر.س',
+    footerTagline:'قهوة مختصة، محمصة بخبرة وإتقان — جدة، المملكة العربية السعودية',
+  },
+  en: {
+    dir:'ltr', lang:'en', langBtn:'AR',
+    logoWord:'hemi', logoSub:'Coffee Roasters',
+    hours:'Open 24/7',
+    searchPh:'Search a dish, flavor, or origin...',
+    tabs:{ all:'All', single:'Single Origin', hot:'Espresso & Hot', cold:'Cold Drinks', bakery:'Bakery & Desserts' },
+    resultsCount:(n)=> n + ' items',
+    empty:'No items match your search',
+    notesLabel:'Tasting Notes',
+    roastLabel:'Roast Level',
+    roastLight:'Light', roastDark:'Dark',
+    price:(p)=> 'SAR ' + p,
+    footerTagline:'Specialty coffee, roasted with care and precision — Jeddah, Saudi Arabia',
+  }
+};
+
+const ROAST_LEVELS = 5; // 1 = light ... 5 = dark, used for the marker position
+
+let state = { lang:'ar', cat:'all', query:'' };
+
+/* ---------------------------- helpers ---------------------------- */
+const $ = (sel) => document.querySelector(sel);
+const el = (tag, cls) => { const e = document.createElement(tag); if (cls) e.className = cls; return e; };
+
+function applyTextDirection() {
+  const t = UI[state.lang];
+  document.documentElement.setAttribute('lang', t.lang);
+  document.documentElement.setAttribute('dir', t.dir);
+}
+
+function renderStaticText() {
+  const t = UI[state.lang];
+  $('#langBtnLabel').textContent = t.langBtn;
+  $('#logoWord').textContent = t.logoWord;
+  $('#logoSub').textContent = t.logoSub;
+  $('#hoursText').textContent = t.hours;
+  $('#searchInput').placeholder = t.searchPh;
+  $('#emptyText').textContent = t.empty;
+  $('#footerTagline').textContent = t.footerTagline;
+}
+
+/* ---------------------------- tabs ---------------------------- */
+function renderTabs() {
+  const t = UI[state.lang];
+  const wrap = $('#tabsWrap');
+  wrap.innerHTML = '';
+  const cats = ['all','single','hot','cold','bakery'];
+  cats.forEach((c) => {
+    const btn = el('button', 'tap-scale shrink-0 whitespace-nowrap rounded-full border px-4 py-2 text-[13px] font-bold font-display');
+    btn.textContent = t.tabs[c];
+    btn.dataset.cat = c;
+    const active = state.cat === c;
+    btn.className += active
+      ? ' border-gold bg-gold text-ink shadow-goldGlow'
+      : ' border-white/12 bg-white/5 text-beige/70 hover:border-white/25';
+    btn.addEventListener('click', () => { state.cat = c; renderTabs(); renderGrid(); });
+    wrap.appendChild(btn);
+  });
+}
+
+/* ---------------------------- roast dots (card) ---------------------------- */
+function roastDots(level) {
+  if (!level) return '';
+  let dots = '';
+  for (let i = 1; i <= ROAST_LEVELS; i++) {
+    dots += `<span class="h-1.5 w-1.5 rounded-full ${i <= level ? 'bg-gold' : 'bg-white/15'}"></span>`;
+  }
+  return `<div class="flex items-center gap-1">${dots}</div>`;
+}
+
+/* ---------------------------- grid ---------------------------- */
+function filteredItems() {
+  const q = state.query.trim().toLowerCase();
+  return MENU.filter((item) => {
+    if (state.cat !== 'all' && item.cat !== state.cat) return false;
+    if (!q) return true;
+    const hay = [
+      item.name.ar, item.name.en, item.desc.ar, item.desc.en,
+      ...(item.notes ? [...item.notes.ar, ...item.notes.en] : []),
+      item.origin ? item.origin.ar : '', item.origin ? item.origin.en : '',
+    ].join(' ').toLowerCase();
+    return hay.includes(q);
+  });
+}
+
+function renderGrid() {
+  const t = UI[state.lang];
+  const grid = $('#grid');
+  const items = filteredItems();
+  grid.innerHTML = '';
+  $('#resultCount').textContent = t.resultsCount(items.length);
+
+  $('#emptyState').classList.toggle('hidden', items.length !== 0);
+  $('#emptyState').classList.toggle('flex', items.length === 0);
+
+  items.forEach((item, i) => {
+    const card = el('button', 'fade-item tap-scale group relative flex w-full items-center gap-4 rounded-2xl border border-white/8 bg-white/[0.035] p-3 text-start shadow-card hover:border-gold/30');
+    card.style.animationDelay = (i * 35) + 'ms';
+    card.addEventListener('click', () => openModal(item));
+
+    card.innerHTML = `
+      <div class="relative h-20 w-20 shrink-0 overflow-hidden rounded-xl bg-ink-100">
+        <img src="${item.img}" loading="lazy" alt="" class="h-full w-full object-cover transition duration-500 group-hover:scale-110"
+             onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,${encodeURIComponent(fallbackSVG())}'" />
+        ${item.badge ? `<span class="absolute -top-1.5 -start-1.5 rounded-full bg-gold px-1.5 py-0.5 text-[8px] font-extrabold text-ink shadow">${item.badge[state.lang]}</span>` : ''}
+      </div>
+      <div class="min-w-0 flex-1">
+        ${item.origin ? `<p class="mb-0.5 truncate text-[10px] font-bold uppercase tracking-wider text-gold/70">${item.origin[state.lang]}</p>` : ''}
+        <div class="flex items-start justify-between gap-2">
+          <h3 class="truncate font-display text-[15px] font-bold text-beige-100">${item.name[state.lang]}</h3>
+        </div>
+        <p class="mt-0.5 line-clamp-1 text-xs text-beige/45">${item.desc[state.lang]}</p>
+        <div class="mt-2 flex items-center justify-between">
+          ${item.roast ? roastDots(item.roast) : '<span></span>'}
+          <span class="font-wordmark text-sm font-semibold text-gold">${t.price(item.price)}</span>
+        </div>
+      </div>
+    `;
+    grid.appendChild(card);
+  });
+}
+
+function fallbackSVG() {
+  return `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='#3a3733'/><text x='50' y='56' font-size='34' text-anchor='middle' fill='#EFBD45' font-family='sans-serif'>☕</text></svg>`;
+}
+
+/* ---------------------------- modal ---------------------------- */
+function openModal(item) {
+  const t = UI[state.lang];
+  $('#modalImg').src = item.img;
+  $('#modalImg').onerror = function () { this.onerror = null; this.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(fallbackSVG()); };
+  $('#modalOrigin').textContent = item.origin ? item.origin[state.lang] : t.tabs[item.cat];
+  $('#modalName').textContent = item.name[state.lang];
+  $('#modalPrice').textContent = t.price(item.price);
+  $('#modalDesc').textContent = item.desc[state.lang];
+
+  const badgeEl = $('#modalBadge');
+  if (item.badge) { badgeEl.textContent = item.badge[state.lang]; badgeEl.classList.remove('hidden'); }
+  else { badgeEl.classList.add('hidden'); }
+
+  $('#modalNotesLabel').textContent = t.notesLabel;
+  const notesWrap = $('#modalNotes');
+  notesWrap.innerHTML = '';
+  (item.notes ? item.notes[state.lang] : []).forEach((n) => {
+    const chip = el('span', 'chip rounded-full border border-gold/25 bg-gold/10 px-3 py-1 text-xs font-semibold text-gold');
+    chip.textContent = n;
+    notesWrap.appendChild(chip);
+  });
+
+  const roastWrap = $('#modalRoastWrap');
+  if (item.roast) {
+    roastWrap.classList.remove('hidden');
+    $('#modalRoastLabel').textContent = t.roastLabel;
+    $('#modalRoastValue').textContent = item.roast <= 2 ? t.roastLight : (item.roast >= 4 ? t.roastDark : '');
+    $('#roastLightLabel').textContent = t.roastLight;
+    $('#roastDarkLabel').textContent = t.roastDark;
+    const pct = ((item.roast - 1) / (ROAST_LEVELS - 1)) * 100;
+    $('#modalRoastMarker').style.left = pct + '%';
+  } else {
+    roastWrap.classList.add('hidden');
+  }
+
+  const overlay = $('#modalOverlay');
+  overlay.classList.remove('hidden');
+  overlay.classList.add('flex');
+  document.body.classList.add('modal-open');
+  requestAnimationFrame(() => { $('#modalCard').style.transform = 'translateY(0)'; });
+}
+
+function closeModal() {
+  $('#modalOverlay').classList.add('hidden');
+  $('#modalOverlay').classList.remove('flex');
+  document.body.classList.remove('modal-open');
+}
+
+$('#modalClose').addEventListener('click', closeModal);
+$('#modalOverlay').addEventListener('click', (e) => { if (e.target.id === 'modalOverlay') closeModal(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+/* ---------------------------- search ---------------------------- */
+let searchTimer;
+$('#searchInput').addEventListener('input', (e) => {
+  clearTimeout(searchTimer);
+  const val = e.target.value;
+  searchTimer = setTimeout(() => { state.query = val; renderGrid(); }, 120);
+});
+
+/* ---------------------------- language toggle ---------------------------- */
+$('#langBtn').addEventListener('click', () => {
+  state.lang = state.lang === 'ar' ? 'en' : 'ar';
+  applyTextDirection();
+  renderStaticText();
+  renderTabs();
+  renderGrid();
+});
+
+/* ---------------------------- init ---------------------------- */
+applyTextDirection();
+renderStaticText();
+renderTabs();
+renderGrid();
+</script>
+</body>
+</html>
